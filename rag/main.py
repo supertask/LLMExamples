@@ -3,6 +3,9 @@ groq_api_key = os.environ["GROQ_API_KEY"]
 
 
 from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PDFMinerLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader
+
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
@@ -17,15 +20,20 @@ def setup_vectorstore_from_pdf(pdf_path: str, persist_directory: str = "./chroma
     persist_directory に既存の DB があれば継続利用、なければ新規作成します。
     """
     # 1. PDF を読み込む
-    loader = PyPDFLoader(pdf_path)
+    #loader = PyPDFLoader(pdf_path)
+    loader = PDFMinerLoader(pdf_path)
+    #loader = UnstructuredPDFLoader(pdf_path, mode="paged", languages=['ja'])
     documents = loader.load()
+
 
     # 2. テキストを分割する
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     docs = text_splitter.split_documents(documents)
 
     # 3. Embeddings を作成（ここでは Hugging Face のモデル例）
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    #embeddings = HuggingFaceEmbeddings( model_name="oshizo/sbert-jsnli-luke-japanese-base-lite")
+    embeddings = HuggingFaceEmbeddings( model_name="'cyberagent/open-calm-1b'")
 
     # 4. Chroma へ保存（あるいは既存 DB があれば読み込んで再構築しないように工夫）
     if not os.path.exists(persist_directory):
@@ -45,7 +53,7 @@ def setup_vectorstore_from_pdf(pdf_path: str, persist_directory: str = "./chroma
     return vectordb
 
 def main():
-    pdf_path = "example.pdf"  # 実際の PDF パスを指定
+    pdf_path = "input/example2.pdf"
     vectordb = setup_vectorstore_from_pdf(pdf_path)
 
     # Groq 用の LLM（ChatGroq インスタンス）を用意
@@ -66,7 +74,7 @@ def main():
     )
 
     # テスト的にクエリを投げてみる
-    query = "PDF の中で解説されている主要なトピックは何ですか？"
+    query = "PDF の中で解説されている会社の事業内容を教えて"
     result = qa_chain.run(query)
     
     print("=== AI の回答 ===")

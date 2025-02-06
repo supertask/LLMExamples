@@ -6,3 +6,10 @@ pypdf
 langchain-community
 langchain_groq
 chromadb
+pdfminer.six
+unstructured
+pi-heif
+unstructured_inference
+pdf2image
+certifi
+
